@@ -223,10 +223,10 @@ C -------------------------------------------------------------------
         CALL CPU_TIME (tstart)
         write(17,*)
         write(17,193) KSTEP,KINC,tstart
-193     format(1x,' STEP',i2, '  INCREMENT',i3,'  STARTS(s):',f12.4)
-        write(17,*) '-----------------------------------------------'
+193     format(1x,'STEP',i2, '  INCREMENT',i3,'  STARTS(s):',f12.4)
+        write(17,*) '----------------------------------------------'
         write(17,194) TIME(1), TIME(2)
-194     format('   STEP TIME:',f9.6, '    TOTAL TIME:',f9.6)  
+194     format('  STEP TIME:',f9.6, '    TOTAL TIME:',f9.6)  
         write(17,*)
         
         write(*,*)
@@ -241,8 +241,8 @@ C -------------------------------------------------------------------
 
         CALL CPU_TIME (tfinish)
         write(17,196) KSTEP,KINC,tfinish
-196     format(1x,' STEP',i2, '  INCREMENT',i3,'   STOPS(s):',f12.4)
-        write(17,*) '-----------------------------------------------'
+196     format(1x,'STEP',i2, '  INCREMENT',i3,'   STOPS(s):',f12.4)
+        write(17,*) '----------------------------------------------'
         write(17,194) TIME(1), TIME(2)
         write(17,*)
         

@@ -193,8 +193,8 @@ C--------------------------------------------------------------------
         
 C-------------------Parameter setting suggestion-------------------
         
-        cspace = 24*NND+4*NSF+28*NEL+4*(NSFND+NELSF)
-        cspace = cspace/(1024*1024)
+      cspace = 24*NNDALL+4*NFCALL+28*NELALL+4*(FCNDMARKER+ELFCMARKER)
+      cspace = cspace/(1024*1024)
       
         FNAMEX=DMKNAME('PARA_SET',XINDIR(1:LXINDIR),'.txt')    
         OPEN(UNIT=180,FILE=FNAMEX,STATUS='UNKNOWN') 

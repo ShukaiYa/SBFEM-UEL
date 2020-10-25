@@ -46,8 +46,8 @@
       CALL FORMMATRX(KK,MM,ZP,PRE,SM0,NDOFEL,2*NDOFEL,MLVARX,JELEM)
 !-------------------------------------------------------- 
 !     Output required variables (Step 7)   
-      CALL OUTPUTVARIABLE(RHS,AMATRX,SVARS,ENERGY,U,V,A,LFLAGS,
-     1 DTIME,NDOFEL,NRHS,NSVARS,MLVARX,JELEM,PARAMS,KK,MM)
+      CALL OUTPUTVARIABLE(RHS,AMATRX,SVARS,PROPS,ENERGY,U,V,A,
+     1 LFLAGS,DTIME,NDOFEL,NRHS,NSVARS,MLVARX,JELEM,PARAMS,KK,MM)
       
 
       RETURN
@@ -1165,22 +1165,23 @@ C------------------------Stiffness and Mass matrix-------------------------
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 
 !     Output required matrix and array
-      SUBROUTINE OUTPUTVARIABLE(RHS,AMATRX,SVARS,ENERGY,U,V,A,LFLAGS,
-     1 DTIME,NDOFEL,NRHS,NSVARS,MLVARX,JELEM,PARAMS,KK,MM)
+      SUBROUTINE OUTPUTVARIABLE(RHS,AMATRX,SVARS,PROPS,ENERGY,U,V,A,
+     1 LFLAGS,DTIME,NDOFEL,NRHS,NSVARS,MLVARX,JELEM,PARAMS,KK,MM)
       
       INCLUDE 'ABA_PARAM.INC'
       
       DIMENSION RHS(MLVARX,*),AMATRX(NDOFEL,NDOFEL)
       DIMENSION SVARS(NSVARS),LFLAGS(*)  
       DIMENSION U(NDOFEL),V(NDOFEL),A(NDOFEL)
-      DIMENSION PARAMS(3),ENERGY(8)
-      DOUBLE PRECISION SRESID(NDOFEL), GT(NDOFEL)
+      DIMENSION PARAMS(3),ENERGY(8),PROPS(*)
+      DOUBLE PRECISION SRESID(NDOFEL),GT(NDOFEL),CC(NDOFEL,NDOFEL)
       DOUBLE PRECISION KK(NDOFEL,NDOFEL), MM(NDOFEL,NDOFEL)
       
 
       DOUBLE PRECISION ALPHA,BETA,GAMMA,DADU,DVDU
       
       AMATRX = 0.D0
+      CC=PROPS(4)*MM+PROPS(5)*KK
       
       DO K1=1,NDOFEL
        DO K2 = 1,NRHS
@@ -1210,20 +1211,20 @@ C         *DYNAMIC
           DADU = 1.D0/(BETA*DTIME**2)
           DVDU = GAMMA/(BETA*DTIME)
           
-          AMATRX = DADU*MM+(1.D0+ALPHA)*KK
+          AMATRX = DADU*MM+(1.D0+ALPHA)*DVDU*CC+(1.D0+ALPHA)*KK
                    
           DO I = 1, NDOFEL
              GT(I) =  SVARS(I)
           ENDDO
           
           SRESID = MATMUL(MM,A) + (1.D0+ALPHA)*MATMUL(KK,U)
-     $               - ALPHA*GT
+     $              +(1.D0+ALPHA)*MATMUL(CC,V) - ALPHA*GT
           
           DO K1=1,NDOFEL
 	        RHS(K1,1)=RHS(K1,1)-SRESID(K1)                             
           ENDDO          
           
-          SRESID = MATMUL(KK,U)
+          SRESID = MATMUL(KK,U) + MATMUL(CC,V)
           DO K1 = 1, NDOFEL
             SVARS(K1+NDOFEL) = SVARS(K1)
             SVARS(K1) = SRESID(K1)
@@ -1248,11 +1249,11 @@ C         *DYNAMIC
 
       ELSE IF (LFLAGS(3).EQ.2) THEN 
 C      Stiffness matrix 
-        AMATRX=KK
+      AMATRX=KK
               
       ELSE IF (LFLAGS(3).EQ.3) THEN 
 C      Damping matrix     
-       AMATRX=0.4D0*MM+0.002D0*KK
+       AMATRX=CC
      				   
       ELSE IF (LFLAGS(3).EQ.4) THEN 
 C     Mass matrix 
@@ -1266,8 +1267,8 @@ C       Half-step residual calculation
           GT(I) =  0.5D0*(SVARS(I)+SVARS(I+NDOFEL))
        ENDDO
        
-       SRESID = MATMUL(MM,A) + (1.D0+ALPHA)*MATMUL(KK,U)
-     $           - ALPHA*GT
+       SRESID = MATMUL(MM,A)+(1.D0+ALPHA)*MATMUL(KK,U)
+     $          +(1.D0+ALPHA)*MATMUL(CC,V)- ALPHA*GT
           
        DO K1=1,NDOFEL
 	    RHS(K1,1) = RHS(K1,1) - SRESID(K1)                           
@@ -1277,7 +1278,7 @@ C       Half-step residual calculation
 C       Initial acceleration calculation
        AMATRX=MM 
        
-       SRESID = MATMUL(KK,U)   
+      SRESID = MATMUL(KK,U)+MATMUL(CC,V)    
        DO K1=1,NDOFEL
 	    RHS(K1,1) = RHS(K1,1) - SRESID(K1)
           SVARS(K1) = SRESID(K1)

@@ -24,10 +24,12 @@
       DOUBLE PRECISION RCRD(MCRD,NNODE)
 
       DIMENSION DMatx(6,6)
-
-!--------------------------------------------------------
+      
+!--------------------------------------------------------      
 !     Print work state on screen and ANA_STAT.txt     
-      CALL PRINTSTATE(JPROPS,LFLAGS,DTIME,JELEM)     
+      CALL PRINTSTATE(JPROPS,LFLAGS,DTIME,JELEM) 
+      
+      IF(KSTEP.EQ.1.AND.KINC.EQ.1) THEN
 !--------------------------------------------------------          
 !     Localization of element information (Step 1)
       CALL LOCALSUBDM(SELE,NFC,RCRD,JELEM,COORDS,MCRD,NNODE) 
@@ -44,17 +46,27 @@
 !--------------------------------------------------------  
 !     Calculate stiffness/mass matrix (Steps 5&6)
       CALL FORMMATRX(KK,MM,ZP,PRE,SM0,NDOFEL,2*NDOFEL,MLVARX,JELEM)
-!-------------------------------------------------------- 
+!--------------------------------------------------------      
+!     Store pre-calculated stiff/mass matrices
+      CALL STOREMATRICES (SVARS,NSVARS,KK,MM,NDOFEL)
+      
+      ELSE 
+!--------------------------------------------------------  
+!     Read pre-calculated stiff/mass matrices
+      CALL READMATRICES(SVARS,NSVARS,KK,MM,NDOFEL)
+
+      ENDIF
+      !-------------------------------------------------------- 
 !     Output required variables (Step 7)   
       CALL OUTPUTVARIABLE(RHS,AMATRX,SVARS,PROPS,ENERGY,U,V,A,
      1 LFLAGS,DTIME,NDOFEL,NRHS,NSVARS,MLVARX,JELEM,PARAMS,KK,MM)
       
-
+      
       RETURN
       END
 
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-	
+     
 !     Subritine for dealing with user-defined external databases
       SUBROUTINE UEXTERNALDB(LOP,LRESTART,TIME,DTIME,KSTEP,KINC)
       
@@ -271,6 +283,7 @@ C -------------------------------------------------------------------
         write(*,*)
    
       ENDIF
+
       
       RETURN
       END 
@@ -486,6 +499,7 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
       END
 
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+
 !     Subroutine for coefficients [e0],[e1],[e2], [m0] on one surface
       SUBROUTINE SURFCOEFF (SE0,SE1,SE2,SM0,DMatx,Density,SELE,
      1 NDOFEL,NPT,NDOFFC,NNODE,RCRD,ifc,MCRD)
@@ -1180,6 +1194,9 @@ CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 
       DOUBLE PRECISION ALPHA,BETA,GAMMA,DADU,DVDU
       
+      
+
+      
       AMATRX = 0.D0
       CC=PROPS(4)*MM+PROPS(5)*KK
       
@@ -1471,7 +1488,7 @@ C      Damping matrix
           WRITE(*,*)
           WRITE(17,*) "   *Damping matrix C Calculation" 
       ELSE IF (LFLAGS(3).EQ.4) THEN 
-C     Mass matrix          
+C     Mass matrix   
           WRITE(*,*) "*Mass matrix M Calculation"
           WRITE(*,*)
           WRITE(17,*) "   *Mass matrix M Calculation"
@@ -1498,6 +1515,45 @@ C     Mass matrix
       END
 
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC      
+
+!     Store stiff/mass matrices
+      SUBROUTINE STOREMATRICES(SVARS, NSVARS, KK, MM, NDOFEL)
+      
+      INCLUDE 'ABA_PARAM.INC'
+      DIMENSION SVARS(NSVARS)
+      DOUBLE PRECISION KK(NDOFEL,NDOFEL), MM(NDOFEL,NDOFEL)
+      
+      DO I = 1,NDOFEL
+      SVARS((I+1)*NDOFEL+1:(I+2)*NDOFEL) = KK(I,1:NDOFEL)      
+      SVARS((NDOFEL+I+1)*NDOFEL+1:(NDOFEL+I+2)*NDOFEL) = MM(I,1:NDOFEL)
+      ENDDO
+      
+      
+     
+      RETURN
+      
+      END
+
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC      
+
+!     Read stiff/mass matrices      
+      SUBROUTINE READMATRICES(SVARS, NSVARS, KK, MM, NDOFEL)
+      
+      INCLUDE 'ABA_PARAM.INC'
+      DIMENSION SVARS(NSVARS)
+      DOUBLE PRECISION KK(NDOFEL,NDOFEL), MM(NDOFEL,NDOFEL)
+      
+      DO I = 1,NDOFEL
+      KK(I,1:NDOFEL) = SVARS((I+1)*NDOFEL+1:(I+2)*NDOFEL)     
+      MM(I,1:NDOFEL) = SVARS((NDOFEL+I+1)*NDOFEL+1:(NDOFEL+I+2)*NDOFEL)
+      ENDDO
+      
+      
+      RETURN
+      
+      END
+
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC 
 
 !     Function to form complete file name    
       CHARACTER*(*) FUNCTION DMKNAME(FNAME,DNAME,EXTEN)

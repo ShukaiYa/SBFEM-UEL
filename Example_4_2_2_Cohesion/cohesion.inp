@@ -222,7 +222,10 @@ LeftNode, 1, 1
              0.,              2.
 *Amplitude, name=Amp-3, definition=PERIODIC
 1,  6.28318530717959,              0.,              0.
-             0.,              6.                           
+             0.,              6. 
+*STEP, NAME=precalculation
+*Static
+*END STEP                                       
 *Step, name=step-1, nlgeom=NO, inc=1000
 *Static, direct
 0.0025, 1.,

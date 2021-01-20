@@ -47,12 +47,12 @@
 !     Calculate stiffness/mass matrix (Steps 5&6)
       CALL FORMMATRX(KK,MM,ZP,PRE,SM0,NDOFEL,2*NDOFEL,MLVARX,JELEM)
 !--------------------------------------------------------      
-!     Store pre-calculated stiff/mass matrices
+!     Store pre-calculated stiff/mass matrices (Step 6)
       CALL STOREMATRICES (SVARS,NSVARS,KK,MM,NDOFEL)
       
       ELSE 
 !--------------------------------------------------------  
-!     Read pre-calculated stiff/mass matrices
+!     Read pre-calculated stiff/mass matrices (Step 8)
       CALL READMATRICES(SVARS,NSVARS,KK,MM,NDOFEL)
 
       ENDIF
